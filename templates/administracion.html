@@ -1,0 +1,591 @@
+{% extends "base.html" %}
+{% load static %}
+{% load formato_precio %}
+
+{% block title %}Administración - Mister K{% endblock %}
+
+{% block header_title %}MISTER K{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+  <!-- Título -->
+  <div class="mb-8 text-center">
+    <h2 class="text-4xl font-bold text-slate-800 mb-2 flex items-center justify-center space-x-3">
+      <i class="fas fa-cog text-yellow-500"></i>
+      <span>Panel de Administración</span>
+    </h2>
+    <div class="h-1 w-40 bg-yellow-400 rounded mx-auto"></div>
+  </div>
+
+  <!-- Mensajes -->
+  {% if messages %}
+    <div class="mb-6">
+      {% for message in messages %}
+        <div class="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 rounded-lg mb-2 flex items-center space-x-2">
+          <i class="fas fa-check-circle"></i>
+          <p class="font-semibold">{{ message }}</p>
+        </div>
+      {% endfor %}
+    </div>
+  {% endif %}
+
+  <!-- Tabs de navegación -->
+  <div class="mb-6 flex space-x-4 border-b-2 border-gray-200">
+    <button onclick="mostrarTab('productos')" id="tab-productos" 
+            class="px-6 py-3 font-bold text-lg border-b-4 border-yellow-400 text-slate-800 transition-colors duration-200">
+      <i class="fas fa-utensils text-yellow-500"></i> Gestión de Productos
+    </button>
+    <button onclick="mostrarTab('agregados')" id="tab-agregados" 
+            class="px-6 py-3 font-bold text-lg border-b-4 border-transparent text-gray-500 hover:text-slate-800 transition-colors duration-200">
+      <i class="fas fa-plus-circle text-gray-400"></i> Gestión de Agregados
+    </button>
+    <button onclick="mostrarTab('pedidos')" id="tab-pedidos" 
+            class="px-6 py-3 font-bold text-lg border-b-4 border-transparent text-gray-500 hover:text-slate-800 transition-colors duration-200">
+      <i class="fas fa-clipboard-list text-gray-400"></i> Gestión de Pedidos
+    </button>
+  </div>
+
+  <!-- Sección de Productos -->
+  <div id="seccion-productos" class="tab-content">
+    <!-- Formulario para agregar producto (arriba) -->
+    <div class="bg-white rounded-lg shadow-xl overflow-hidden mb-8">
+      <div class="bg-gradient-to-r from-slate-800 to-slate-900 px-6 py-4">
+        <h3 class="text-2xl font-bold text-white flex items-center space-x-2">
+          <i class="fas fa-plus-circle text-yellow-400"></i>
+          <span>Agregar Nuevo Producto</span>
+        </h3>
+      </div>
+
+      <div class="px-6 py-6">
+        <form method="POST" enctype="multipart/form-data">
+          {% csrf_token %}
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+            <div>
+              <label class="block text-sm font-bold text-slate-700 mb-2">
+                <i class="fas fa-tag text-yellow-500"></i> Nombre del producto
+              </label>
+              <input type="text" name="nombre" placeholder="Ej: Hamburguesa Clásica" 
+                     class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-yellow-400 focus:ring-2 focus:ring-yellow-400 focus:outline-none transition-all duration-200" 
+                     required>
+            </div>
+            <div>
+              <label class="block text-sm font-bold text-slate-700 mb-2">
+                <i class="fas fa-dollar-sign text-yellow-500"></i> Precio
+              </label>
+              <input type="number" name="precio" placeholder="Ej: 15000" min="0" step="1"
+                     class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-yellow-400 focus:ring-2 focus:ring-yellow-400 focus:outline-none transition-all duration-200" 
+                     required>
+            </div>
+          </div>
+          <div class="mb-4">
+            <label class="block text-sm font-bold text-slate-700 mb-2">
+              <i class="fas fa-image text-yellow-500"></i> Imagen del producto
+            </label>
+            <input type="file" name="imagen" accept="image/*"
+                   class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-yellow-400 focus:ring-2 focus:ring-yellow-400 focus:outline-none transition-all duration-200">
+            <p class="text-xs text-gray-500 mt-1">Formatos aceptados: JPG, PNG, GIF</p>
+          </div>
+          <button type="submit" name="add_producto" 
+                  class="w-full bg-yellow-400 hover:bg-yellow-500 text-slate-900 font-bold py-4 px-6 rounded-lg transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105 flex items-center justify-center space-x-2">
+            <i class="fas fa-plus"></i>
+            <span>Agregar Producto</span>
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <!-- Tabla de productos -->
+    <div class="bg-white rounded-lg shadow-xl overflow-hidden mb-8">
+      <div class="bg-gradient-to-r from-slate-800 to-slate-900 px-6 py-4">
+        <h3 class="text-2xl font-bold text-white flex items-center space-x-2">
+          <i class="fas fa-utensils text-yellow-400"></i>
+          <span>Lista de Productos</span>
+        </h3>
+      </div>
+
+      <div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-gray-200">
+          <thead class="bg-gray-50">
+            <tr>
+              <th class="px-6 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">ID</th>
+              <th class="px-6 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Imagen</th>
+              <th class="px-6 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Nombre</th>
+              <th class="px-6 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Precio</th>
+              <th class="px-6 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Oferta</th>
+              <th class="px-6 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Acciones</th>
+            </tr>
+          </thead>
+          <tbody class="bg-white divide-y divide-gray-200">
+            {% for producto in productos %}
+            <tr class="hover:bg-gray-50 transition-colors duration-200">
+              <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 text-center">
+                {{ producto.id }}
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap">
+                {% if producto.imagen %}
+                  <img src="{{ producto.imagen.url }}" alt="{{ producto.nombre }}" 
+                       class="w-16 h-16 object-cover rounded-lg">
+                {% else %}
+                  <div class="w-16 h-16 bg-gray-200 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-image text-gray-400"></i>
+                  </div>
+                {% endif %}
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap">
+                <div class="text-sm font-semibold text-gray-900">{{ producto.nombre }}</div>
+                {% if producto.descripcion %}
+                  <div class="text-xs text-gray-500">{{ producto.descripcion|truncatewords:5 }}</div>
+                {% endif %}
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap">
+                <div class="text-sm font-bold text-slate-800">${{ producto.precio|formato_precio }}</div>
+                {% if producto.oferta %}
+                  <div class="text-xs text-green-600 font-semibold">
+                    Precio con descuento: ${{ producto.precio_con_descuento|formato_precio }}
+                  </div>
+                {% endif %}
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap">
+                {% if producto.oferta %}
+                  <span class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">
+                    <i class="fas fa-fire mr-1"></i>
+                    {{ producto.porcentajeOferta }}% OFF
+                  </span>
+                {% else %}
+                  <span class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-600">
+                    Sin oferta
+                  </span>
+                {% endif %}
+              </td>
+              <td class="px-6 py-4 text-sm font-medium">
+                <div class="flex flex-col space-y-4 min-w-[300px]">
+                  <!-- Sección: Actualizar Producto -->
+                  <div class="bg-blue-50 p-3 rounded-lg border border-blue-200">
+                    <p class="text-xs font-bold text-blue-700 mb-2">
+                      <i class="fas fa-edit"></i> Editar Producto
+                    </p>
+                    <form method="POST" enctype="multipart/form-data" class="space-y-2">
+                      {% csrf_token %}
+                      <input type="hidden" name="producto_id" value="{{ producto.id }}">
+                      <div class="grid grid-cols-2 gap-2">
+                        <input type="text" name="nombre" value="{{ producto.nombre }}" 
+                               class="px-3 py-2 border-2 border-gray-300 rounded-lg focus:border-blue-400 focus:outline-none text-sm"
+                               placeholder="Nombre">
+                        <input type="number" name="precio" value="{{ producto.precio }}" 
+                               class="px-3 py-2 border-2 border-gray-300 rounded-lg focus:border-blue-400 focus:outline-none text-sm"
+                               placeholder="Precio">
+                      </div>
+                      <div class="flex items-center space-x-2">
+                        <input type="file" name="imagen" accept="image/*"
+                               class="flex-1 px-2 py-2 border-2 border-gray-300 rounded-lg focus:border-blue-400 focus:outline-none text-xs">
+                        <button type="submit" name="update_producto" 
+                                class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg font-semibold text-sm transition-colors duration-200 whitespace-nowrap">
+                          <i class="fas fa-save"></i> Guardar
+                        </button>
+                      </div>
+                    </form>
+                  </div>
+
+                  <!-- Sección: Gestionar Oferta -->
+                  <div class="bg-yellow-50 p-3 rounded-lg border border-yellow-200">
+                    <p class="text-xs font-bold text-yellow-700 mb-2">
+                      <i class="fas fa-tag"></i> Gestionar Oferta
+                    </p>
+                    <form method="POST" class="space-y-2">
+                      {% csrf_token %}
+                      <input type="hidden" name="producto_id" value="{{ producto.id }}">
+                      <div class="flex items-center space-x-3">
+                        <label class="flex items-center space-x-2 cursor-pointer">
+                          <input type="checkbox" name="oferta_activa" {% if producto.oferta %}checked{% endif %} 
+                                 class="w-4 h-4 text-yellow-600 border-gray-300 rounded focus:ring-yellow-500"
+                                 onchange="this.form.querySelector('input[name=porcentaje_oferta]').disabled = !this.checked">
+                          <span class="text-sm font-semibold text-gray-700">Activar oferta</span>
+                        </label>
+                        <input type="number" name="porcentaje_oferta" value="{{ producto.porcentajeOferta|default:0 }}" 
+                               min="0" max="100" placeholder="%" 
+                               class="px-3 py-2 border-2 border-gray-300 rounded-lg focus:border-yellow-400 focus:outline-none text-sm w-20"
+                               {% if not producto.oferta %}disabled{% endif %}>
+                        <button type="submit" name="update_oferta" 
+                                class="bg-yellow-400 hover:bg-yellow-500 text-slate-900 px-4 py-2 rounded-lg font-semibold text-sm transition-colors duration-200 whitespace-nowrap">
+                          <i class="fas fa-check"></i> Aplicar
+                        </button>
+                      </div>
+                    </form>
+                  </div>
+
+                  <!-- Sección: Eliminar Producto -->
+                  <div class="bg-red-50 p-3 rounded-lg border border-red-200">
+                    <p class="text-xs font-bold text-red-700 mb-2">
+                      <i class="fas fa-exclamation-triangle"></i> Zona de Peligro
+                    </p>
+                    <form method="POST" class="inline">
+                      {% csrf_token %}
+                      <input type="hidden" name="producto_id" value="{{ producto.id }}">
+                      <button type="submit" name="delete_producto" 
+                              class="w-full bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg font-semibold text-sm transition-colors duration-200"
+                              onclick="return confirm('¿Estás seguro de eliminar este producto? Esta acción no se puede deshacer.')">
+                        <i class="fas fa-trash"></i> Eliminar Producto
+                      </button>
+                    </form>
+                  </div>
+                </div>
+              </td>
+            </tr>
+            {% empty %}
+            <tr>
+              <td colspan="6" class="px-6 py-8 text-center text-gray-500">
+                <i class="fas fa-inbox text-4xl mb-2"></i>
+                <p>No hay productos registrados</p>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Paginación de productos -->
+      {% if productos.has_other_pages %}
+        <div class="px-6 py-4 border-t border-gray-200">
+          <div class="flex justify-center">
+            <nav class="flex items-center space-x-2" aria-label="Paginación">
+              {% if productos.has_previous %}
+                <a href="?page={{ productos.previous_page_number }}" 
+                   class="px-4 py-2 bg-white border-2 border-yellow-400 text-slate-800 font-bold rounded-lg hover:bg-yellow-400 hover:text-white transition-all duration-200 shadow-md hover:shadow-lg">
+                  <i class="fas fa-chevron-left"></i> Anterior
+                </a>
+              {% else %}
+                <span class="px-4 py-2 bg-gray-200 text-gray-400 font-bold rounded-lg cursor-not-allowed">
+                  <i class="fas fa-chevron-left"></i> Anterior
+                </span>
+              {% endif %}
+
+              <div class="flex items-center space-x-1">
+                {% for num in productos.paginator.page_range %}
+                  {% if productos.number == num %}
+                    <span class="px-4 py-2 bg-yellow-400 text-slate-900 font-bold rounded-lg shadow-lg">
+                      {{ num }}
+                    </span>
+                  {% elif num > productos.number|add:'-3' and num < productos.number|add:'3' %}
+                    <a href="?page={{ num }}" 
+                       class="px-4 py-2 bg-white border-2 border-yellow-400 text-slate-800 font-bold rounded-lg hover:bg-yellow-400 hover:text-white transition-all duration-200 shadow-md hover:shadow-lg">
+                      {{ num }}
+                    </a>
+                  {% endif %}
+                {% endfor %}
+              </div>
+
+              {% if productos.has_next %}
+                <a href="?page={{ productos.next_page_number }}" 
+                   class="px-4 py-2 bg-white border-2 border-yellow-400 text-slate-800 font-bold rounded-lg hover:bg-yellow-400 hover:text-white transition-all duration-200 shadow-md hover:shadow-lg">
+                  Siguiente <i class="fas fa-chevron-right"></i>
+                </a>
+              {% else %}
+                <span class="px-4 py-2 bg-gray-200 text-gray-400 font-bold rounded-lg cursor-not-allowed">
+                  Siguiente <i class="fas fa-chevron-right"></i>
+                </span>
+              {% endif %}
+            </nav>
+          </div>
+
+          <!-- Información de paginación -->
+          <div class="mt-4 text-center text-gray-600">
+            <p class="text-sm">
+              Mostrando página <span class="font-bold text-slate-800">{{ productos.number }}</span> de 
+              <span class="font-bold text-slate-800">{{ productos.paginator.num_pages }}</span>
+              (Total: {{ productos.paginator.count }} productos)
+            </p>
+          </div>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Sección de Agregados -->
+  <div id="seccion-agregados" class="tab-content hidden">
+    <!-- Formulario para agregar agregado (arriba) -->
+    <div class="bg-white rounded-lg shadow-xl overflow-hidden mb-8">
+      <div class="bg-gradient-to-r from-slate-800 to-slate-900 px-6 py-4">
+        <h3 class="text-2xl font-bold text-white flex items-center space-x-2">
+          <i class="fas fa-plus-circle text-yellow-400"></i>
+          <span>Agregar Nuevo Agregado</span>
+        </h3>
+      </div>
+
+      <div class="px-6 py-6">
+        <form method="POST">
+          {% csrf_token %}
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+            <div>
+              <label class="block text-sm font-bold text-slate-700 mb-2">
+                <i class="fas fa-tag text-yellow-500"></i> Nombre del agregado
+              </label>
+              <input type="text" name="nombre" placeholder="Ej: Queso extra" 
+                     class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-yellow-400 focus:ring-2 focus:ring-yellow-400 focus:outline-none transition-all duration-200" 
+                     required>
+            </div>
+            <div>
+              <label class="block text-sm font-bold text-slate-700 mb-2">
+                <i class="fas fa-dollar-sign text-yellow-500"></i> Precio
+              </label>
+              <input type="number" name="precio" placeholder="Ej: 2000" min="0" step="1"
+                     class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-yellow-400 focus:ring-2 focus:ring-yellow-400 focus:outline-none transition-all duration-200" 
+                     required>
+            </div>
+          </div>
+          <button type="submit" name="add_agregado" 
+                  class="w-full bg-yellow-400 hover:bg-yellow-500 text-slate-900 font-bold py-4 px-6 rounded-lg transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105 flex items-center justify-center space-x-2">
+            <i class="fas fa-plus"></i>
+            <span>Agregar Agregado</span>
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <!-- Tabla de agregados -->
+    <div class="bg-white rounded-lg shadow-xl overflow-hidden mb-8">
+      <div class="bg-gradient-to-r from-slate-800 to-slate-900 px-6 py-4">
+        <h3 class="text-2xl font-bold text-white flex items-center space-x-2">
+          <i class="fas fa-plus-circle text-yellow-400"></i>
+          <span>Lista de Agregados</span>
+        </h3>
+      </div>
+
+      <div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-gray-200">
+          <thead class="bg-gray-50">
+            <tr>
+              <th class="px-6 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">ID</th>
+              <th class="px-6 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Nombre</th>
+              <th class="px-6 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Precio</th>
+              <th class="px-6 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Acciones</th>
+            </tr>
+          </thead>
+          <tbody class="bg-white divide-y divide-gray-200">
+            {% for agregado in agregados %}
+            <tr class="hover:bg-gray-50 transition-colors duration-200">
+              <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 text-center">
+                {{ agregado.id }}
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap">
+                <div class="text-sm font-semibold text-gray-900">{{ agregado.nombre }}</div>
+              </td>
+            <td class="px-6 py-4 whitespace-nowrap">
+              <div class="text-sm font-bold text-slate-800">${{ agregado.precio|formato_precio }}</div>
+            </td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                <div class="flex flex-col space-y-2">
+                  <!-- Formulario de actualizar agregado -->
+                  <form method="POST" class="flex items-center space-x-2">
+                    {% csrf_token %}
+                    <input type="hidden" name="agregado_id" value="{{ agregado.id }}">
+                    <input type="text" name="nombre" value="{{ agregado.nombre }}" 
+                           class="px-3 py-2 border-2 border-gray-300 rounded-lg focus:border-yellow-400 focus:outline-none text-sm w-40">
+                    <input type="number" name="precio" value="{{ agregado.precio }}" 
+                           class="px-3 py-2 border-2 border-gray-300 rounded-lg focus:border-yellow-400 focus:outline-none text-sm w-24">
+                    <button type="submit" name="update_agregado" 
+                            class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg font-semibold text-sm transition-colors duration-200">
+                      <i class="fas fa-save"></i> Actualizar
+                    </button>
+                  </form>
+
+                  <!-- Formulario de eliminar -->
+                  <form method="POST" class="inline">
+                    {% csrf_token %}
+                    <input type="hidden" name="agregado_id" value="{{ agregado.id }}">
+                    <button type="submit" name="delete_agregado" 
+                            class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg font-semibold text-sm transition-colors duration-200"
+                            onclick="return confirm('¿Estás seguro de eliminar este agregado?')">
+                      <i class="fas fa-trash"></i> Eliminar
+                    </button>
+                  </form>
+                </div>
+              </td>
+            </tr>
+            {% empty %}
+            <tr>
+              <td colspan="4" class="px-6 py-8 text-center text-gray-500">
+                <i class="fas fa-inbox text-4xl mb-2"></i>
+                <p>No hay agregados registrados</p>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Sección de Pedidos -->
+  <div id="seccion-pedidos" class="tab-content hidden">
+    <!-- Tabla de pedidos -->
+    <div class="bg-white rounded-lg shadow-xl overflow-hidden mb-8">
+      <div class="bg-gradient-to-r from-slate-800 to-slate-900 px-6 py-4">
+        <h3 class="text-2xl font-bold text-white flex items-center space-x-2">
+          <i class="fas fa-clipboard-list text-yellow-400"></i>
+          <span>Lista de Pedidos</span>
+        </h3>
+      </div>
+
+      <div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-gray-200">
+          <thead class="bg-gray-50">
+            <tr>
+              <th class="px-6 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">ID</th>
+              <th class="px-6 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Cliente</th>
+              <th class="px-6 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">RUT</th>
+              <th class="px-6 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Productos</th>
+              <th class="px-6 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Forma de Pago</th>
+              <th class="px-6 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Total</th>
+              <th class="px-6 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Estado</th>
+              <th class="px-6 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Fecha</th>
+              <th class="px-6 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Acciones</th>
+            </tr>
+          </thead>
+          <tbody class="bg-white divide-y divide-gray-200">
+            {% for pedido in pedidos %}
+            <tr class="hover:bg-gray-50 transition-colors duration-200">
+              <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 text-center">
+                #{{ pedido.id }}
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap">
+                <div class="text-sm font-semibold text-gray-900">{{ pedido.usuario.nombre_completo }}</div>
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap">
+                <div class="text-sm text-gray-600">{{ pedido.usuario.rut }}</div>
+              </td>
+              <td class="px-6 py-4">
+                <div class="text-sm text-gray-900">
+                  {% for key, item in pedido.productos.items %}
+                    <div class="mb-1">
+                      {{ item.cantidad }}x {{ item.nombre }}
+                      {% if item.agregados %}
+                        <span class="text-xs text-gray-500">
+                          (+{{ item.agregados|length }} agregado{{ item.agregados|length|pluralize:"s" }})
+                        </span>
+                      {% endif %}
+                    </div>
+                  {% endfor %}
+                </div>
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap">
+                <div class="text-sm font-semibold text-gray-900">
+                  {% if pedido.forma_pago == 'Transferencia' %}
+                    <i class="fas fa-university text-blue-500"></i> Transferencia
+                  {% else %}
+                    <i class="fas fa-money-bill text-green-500"></i> Efectivo
+                  {% endif %}
+                </div>
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap">
+                <div class="text-sm font-bold text-slate-800">${{ pedido.total|formato_precio }}</div>
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap">
+                {% if pedido.estado == 'Pendiente' %}
+                  <span class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">
+                    <i class="fas fa-clock mr-1"></i> Pendiente
+                  </span>
+                {% elif pedido.estado == 'Confirmado' %}
+                  <span class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
+                    <i class="fas fa-check-circle mr-1"></i> Confirmado
+                  </span>
+                {% elif pedido.estado == 'Entregado' %}
+                  <span class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                    <i class="fas fa-check-double mr-1"></i> Entregado
+                  </span>
+                {% endif %}
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap">
+                <div class="text-sm text-gray-600">{{ pedido.fecha_pedido|date:"d/m/Y H:i" }}</div>
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                <form method="POST" class="inline">
+                  {% csrf_token %}
+                  <input type="hidden" name="pedido_id" value="{{ pedido.id }}">
+                  <select name="nuevo_estado" 
+                          class="px-3 py-2 border-2 border-gray-300 rounded-lg focus:border-yellow-400 focus:outline-none text-sm mr-2"
+                          onchange="this.form.submit()">
+                    <option value="Pendiente" {% if pedido.estado == 'Pendiente' %}selected{% endif %}>Pendiente</option>
+                    <option value="Confirmado" {% if pedido.estado == 'Confirmado' %}selected{% endif %}>Confirmado</option>
+                    <option value="Entregado" {% if pedido.estado == 'Entregado' %}selected{% endif %}>Entregado</option>
+                  </select>
+                  <input type="hidden" name="update_estado_pedido" value="1">
+                </form>
+              </td>
+            </tr>
+            {% empty %}
+            <tr>
+              <td colspan="9" class="px-6 py-8 text-center text-gray-500">
+                <i class="fas fa-inbox text-4xl mb-2"></i>
+                <p>No hay pedidos registrados</p>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Función para mostrar tabs
+  function mostrarTab(tab) {
+    // Ocultar todas las secciones
+    document.getElementById('seccion-productos').classList.add('hidden');
+    document.getElementById('seccion-agregados').classList.add('hidden');
+    document.getElementById('seccion-pedidos').classList.add('hidden');
+    
+    // Remover estilo activo de todos los tabs
+    document.getElementById('tab-productos').classList.remove('border-yellow-400', 'text-slate-800');
+    document.getElementById('tab-productos').classList.add('border-transparent', 'text-gray-500');
+    document.getElementById('tab-productos').querySelector('i').classList.remove('text-yellow-500');
+    document.getElementById('tab-productos').querySelector('i').classList.add('text-gray-400');
+    
+    document.getElementById('tab-agregados').classList.remove('border-yellow-400', 'text-slate-800');
+    document.getElementById('tab-agregados').classList.add('border-transparent', 'text-gray-500');
+    document.getElementById('tab-agregados').querySelector('i').classList.remove('text-yellow-500');
+    document.getElementById('tab-agregados').querySelector('i').classList.add('text-gray-400');
+    
+    document.getElementById('tab-pedidos').classList.remove('border-yellow-400', 'text-slate-800');
+    document.getElementById('tab-pedidos').classList.add('border-transparent', 'text-gray-500');
+    document.getElementById('tab-pedidos').querySelector('i').classList.remove('text-yellow-500');
+    document.getElementById('tab-pedidos').querySelector('i').classList.add('text-gray-400');
+    
+    // Mostrar la sección seleccionada
+    if (tab === 'productos') {
+      document.getElementById('seccion-productos').classList.remove('hidden');
+      document.getElementById('tab-productos').classList.remove('border-transparent', 'text-gray-500');
+      document.getElementById('tab-productos').classList.add('border-yellow-400', 'text-slate-800');
+      document.getElementById('tab-productos').querySelector('i').classList.remove('text-gray-400');
+      document.getElementById('tab-productos').querySelector('i').classList.add('text-yellow-500');
+    } else if (tab === 'agregados') {
+      document.getElementById('seccion-agregados').classList.remove('hidden');
+      document.getElementById('tab-agregados').classList.remove('border-transparent', 'text-gray-500');
+      document.getElementById('tab-agregados').classList.add('border-yellow-400', 'text-slate-800');
+      document.getElementById('tab-agregados').querySelector('i').classList.remove('text-gray-400');
+      document.getElementById('tab-agregados').querySelector('i').classList.add('text-yellow-500');
+    } else if (tab === 'pedidos') {
+      document.getElementById('seccion-pedidos').classList.remove('hidden');
+      document.getElementById('tab-pedidos').classList.remove('border-transparent', 'text-gray-500');
+      document.getElementById('tab-pedidos').classList.add('border-yellow-400', 'text-slate-800');
+      document.getElementById('tab-pedidos').querySelector('i').classList.remove('text-gray-400');
+      document.getElementById('tab-pedidos').querySelector('i').classList.add('text-yellow-500');
+    }
+  }
+
+  // Habilitar/deshabilitar campo de porcentaje según el checkbox
+  document.querySelectorAll('input[name="oferta_activa"]').forEach(checkbox => {
+    checkbox.addEventListener('change', function() {
+      const porcentajeInput = this.closest('form').querySelector('input[name="porcentaje_oferta"]');
+      porcentajeInput.disabled = !this.checked;
+      if (!this.checked) {
+        porcentajeInput.value = '0';
+      }
+    });
+  });
+</script>
+{% endblock %}
+
+{% block footer %}
+  &copy; 2024 Mister K. Todos los derechos reservados.
+{% endblock %}

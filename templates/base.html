@@ -1,0 +1,761 @@
+<!doctype html>
+{% load static %}
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <title>{% block title %}Mister K{% endblock %}</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Poppins', sans-serif;
+    }
+  </style>
+</head>
+<body class="bg-gray-50">
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      const toast = document.querySelector('.toast');
+      if (toast) {
+        setTimeout(() => {
+          toast.classList.add('opacity-0');
+          setTimeout(() => toast.remove(), 500);
+        }, 3000);
+      }
+    });
+  </script>
+
+  <div class="grid min-h-screen grid-rows-[auto_1fr_auto]">
+    <!-- Barra de navegación moderna -->
+    <header class="bg-gradient-to-r from-slate-800 to-slate-900 shadow-lg sticky top-0 z-50">
+      <nav class="container mx-auto px-4 py-4">
+        <div class="flex items-center justify-between">
+          <!-- Logo y título -->
+          <div class="flex items-center space-x-3">
+            <a href="{% url 'index' %}" class="flex items-center space-x-2">
+              <i class="fas fa-hamburger text-yellow-400 text-2xl"></i>
+              <h1 class="text-2xl font-bold text-white">
+                {% block header_title %}MISTER K{% endblock %}
+              </h1>
+            </a>
+          </div>
+
+          <!-- Menú de navegación -->
+          <ul class="hidden md:flex items-center space-x-6 text-white font-semibold">
+            <li>
+              <a href="{% url 'index' %}" class="hover:text-yellow-400 transition-colors duration-200 flex items-center space-x-1">
+                <i class="fas fa-home text-sm"></i>
+                <span>Inicio</span>
+              </a>
+            </li>
+            <li>
+              <a href="{% url 'menu' %}" class="hover:text-yellow-400 transition-colors duration-200 flex items-center space-x-1">
+                <i class="fas fa-utensils text-sm"></i>
+                <span>Menú</span>
+              </a>
+            </li>
+            <li>
+              <a href="{% url 'ubicacion' %}" class="hover:text-yellow-400 transition-colors duration-200 flex items-center space-x-1">
+                <i class="fas fa-map-marker-alt text-sm"></i>
+                <span>Ubicación</span>
+              </a>
+            </li>
+            <li>
+              <a href="{% url 'estado_pedido' %}" class="hover:text-yellow-400 transition-colors duration-200 flex items-center space-x-1">
+                <i class="fas fa-clipboard-list text-sm"></i>
+                <span>Estado Pedido</span>
+              </a>
+            </li>
+            <li>
+              <a href="{% url 'login' %}" class="hover:text-yellow-400 transition-colors duration-200 flex items-center space-x-1">
+                <i class="fas fa-user text-sm"></i>
+                <span>Login</span>
+              </a>
+            </li>
+          </ul>
+
+          <!-- Información del usuario y acciones -->
+          <div class="flex items-center space-x-4">
+            {% if usuario_sesion %}
+              <!-- Información del usuario logueado -->
+              <div class="hidden md:flex items-center space-x-3 bg-slate-700 px-4 py-2 rounded-lg">
+                <div class="bg-yellow-400 rounded-full p-2">
+                  <i class="fas fa-user text-slate-900 text-sm"></i>
+                </div>
+                <div class="text-white">
+                  <p class="text-sm font-semibold">{{ usuario_sesion.nombre_completo }}</p>
+                  <p class="text-xs text-gray-300">RUT: {{ usuario_sesion.rut }}</p>
+                </div>
+              </div>
+              <!-- Botón cerrar sesión -->
+              <a href="{% url 'cerrar_sesion' %}" 
+                 class="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded-lg transition-all duration-200 shadow-md hover:shadow-lg flex items-center space-x-2">
+                <i class="fas fa-sign-out-alt"></i>
+                <span class="hidden md:inline">Cerrar Sesión</span>
+              </a>
+            {% endif %}
+            
+            <!-- Carrito con contador -->
+            <a href="{% url 'carrito' %}" class="relative flex items-center space-x-2 bg-yellow-400 hover:bg-yellow-500 text-slate-900 font-bold px-4 py-2 rounded-lg transition-all duration-200 shadow-md hover:shadow-lg">
+              <i class="fas fa-shopping-cart text-lg"></i>
+              <span class="hidden md:inline">Carrito</span>
+              {% if request.session.carrito %}
+                <span class="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold rounded-full h-6 w-6 flex items-center justify-center">
+                  {{ request.session.carrito|length }}
+                </span>
+              {% endif %}
+            </a>
+          </div>
+        </div>
+
+        <!-- Menú móvil -->
+        <div class="md:hidden mt-4">
+          {% if usuario_sesion %}
+            <div class="mb-3 bg-slate-700 rounded-lg p-3 flex items-center justify-between">
+              <div class="flex items-center space-x-2">
+                <div class="bg-yellow-400 rounded-full p-2">
+                  <i class="fas fa-user text-slate-900 text-sm"></i>
+                </div>
+                <div class="text-white">
+                  <p class="text-xs font-semibold">{{ usuario_sesion.nombre_completo }}</p>
+                  <p class="text-xs text-gray-300">RUT: {{ usuario_sesion.rut }}</p>
+                </div>
+              </div>
+              <a href="{% url 'cerrar_sesion' %}" 
+                 class="bg-red-500 hover:bg-red-600 text-white font-bold py-1 px-3 rounded-lg text-xs">
+                <i class="fas fa-sign-out-alt"></i> Salir
+              </a>
+            </div>
+          {% endif %}
+          <ul class="flex flex-wrap items-center justify-center space-x-4 text-white text-sm font-semibold">
+            <li>
+              <a href="{% url 'index' %}" class="hover:text-yellow-400 transition-colors">
+                <i class="fas fa-home"></i> Inicio
+              </a>
+            </li>
+            <li>
+              <a href="{% url 'menu' %}" class="hover:text-yellow-400 transition-colors">
+                <i class="fas fa-utensils"></i> Menú
+              </a>
+            </li>
+            <li>
+              <a href="{% url 'ubicacion' %}" class="hover:text-yellow-400 transition-colors">
+                <i class="fas fa-map-marker-alt"></i> Ubicación
+              </a>
+            </li>
+            <li>
+              <a href="{% url 'estado_pedido' %}" class="hover:text-yellow-400 transition-colors">
+                <i class="fas fa-clipboard-list"></i> Estado Pedido
+              </a>
+            </li>
+            <li>
+              <a href="{% url 'login' %}" class="hover:text-yellow-400 transition-colors">
+                <i class="fas fa-user"></i> Login
+              </a>
+            </li>
+          </ul>
+        </div>
+      </nav>
+    </header>
+
+    <main class="bg-gray-50 min-h-screen">
+      {% block content %}
+      <!-- Contenido principal de cada página -->
+      {% endblock %}
+    </main>
+
+    <footer class="bg-gradient-to-r from-slate-800 to-slate-900 text-white py-6">
+      <div class="container mx-auto px-4 text-center">
+        {% block footer %}
+        <p class="text-sm">&copy; 2024 Mister K. Todos los derechos reservados.</p>
+        <p class="text-xs text-gray-400 mt-2">Premium Quality Food</p>
+        {% endblock %}
+      </div>
+    </footer>
+  </div>
+
+  <!-- Modal de Agregados -->
+  <div id="modalAgregados" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-lg shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+      <!-- Header del modal -->
+      <div class="bg-gradient-to-r from-slate-800 to-slate-900 px-6 py-4 flex items-center justify-between sticky top-0 z-10">
+        <h3 class="text-2xl font-bold text-white flex items-center space-x-2">
+          <i class="fas fa-plus-circle text-yellow-400"></i>
+          <span id="modalProductoNombre">¿Qué agregados desea añadir?</span>
+        </h3>
+        <button onclick="cerrarModalAgregados()" class="text-white hover:text-yellow-400 transition-colors duration-200">
+          <i class="fas fa-times text-2xl"></i>
+        </button>
+      </div>
+
+      <!-- Contenido del modal -->
+      <div class="px-6 py-6">
+        <p class="text-gray-600 mb-6">Selecciona los agregados que deseas añadir a tu producto:</p>
+        
+        <!-- Lista de agregados -->
+        <div id="listaAgregados" class="space-y-3 mb-6">
+          <!-- Los agregados se cargarán aquí dinámicamente -->
+        </div>
+
+        <!-- Resumen -->
+        <div class="border-t border-gray-200 pt-4 mb-6">
+          <div class="flex justify-between items-center mb-2">
+            <span class="text-gray-600 font-semibold">Precio del producto:</span>
+            <span id="precioBase" class="text-lg font-bold text-slate-800">$0</span>
+          </div>
+          <div class="flex justify-between items-center mb-2">
+            <span class="text-gray-600 font-semibold">Agregados seleccionados:</span>
+            <span id="precioAgregados" class="text-lg font-bold text-yellow-600">$0</span>
+          </div>
+          <div class="flex justify-between items-center pt-2 border-t border-gray-200">
+            <span class="text-xl font-bold text-slate-800">Total:</span>
+            <span id="precioTotal" class="text-2xl font-bold text-yellow-600">$0</span>
+          </div>
+        </div>
+
+        <!-- Botones -->
+        <div class="flex space-x-4">
+          <button onclick="cerrarModalAgregados()" 
+                  class="flex-1 bg-gray-200 hover:bg-gray-300 text-slate-800 font-bold py-3 px-6 rounded-lg transition-colors duration-200">
+            <i class="fas fa-times"></i> Cancelar
+          </button>
+          <button onclick="confirmarAgregarConAgregados()" 
+                  class="flex-1 bg-yellow-400 hover:bg-yellow-500 text-slate-900 font-bold py-3 px-6 rounded-lg transition-all duration-200 shadow-lg hover:shadow-xl flex items-center justify-center space-x-2">
+            <i class="fas fa-cart-plus"></i>
+            <span>Agregar al Carrito</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal de Registro/Login -->
+  <div id="modalRegistro" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-lg shadow-2xl max-w-md w-full">
+      <!-- Header del modal -->
+      <div class="bg-gradient-to-r from-slate-800 to-slate-900 px-6 py-4 flex items-center justify-between">
+        <h3 class="text-2xl font-bold text-white flex items-center space-x-2">
+          <i class="fas fa-user-plus text-yellow-400"></i>
+          <span id="modalTitulo">Iniciar Sesión o Registrarse</span>
+        </h3>
+        <button onclick="cerrarModalRegistro()" class="text-white hover:text-yellow-400 transition-colors duration-200">
+          <i class="fas fa-times text-2xl"></i>
+        </button>
+      </div>
+
+      <!-- Contenido del modal -->
+      <div class="px-6 py-6">
+        <!-- Tabs para Login/Registro -->
+        <div class="flex space-x-2 mb-6 border-b-2 border-gray-200">
+          <button onclick="mostrarFormularioLogin()" id="tabLogin" 
+                  class="flex-1 py-2 px-4 font-semibold border-b-2 border-yellow-400 text-yellow-600 transition-colors duration-200">
+            <i class="fas fa-sign-in-alt"></i> Iniciar Sesión
+          </button>
+          <button onclick="mostrarFormularioRegistro()" id="tabRegistro" 
+                  class="flex-1 py-2 px-4 font-semibold border-b-2 border-transparent text-gray-500 hover:text-slate-800 transition-colors duration-200">
+            <i class="fas fa-user-plus"></i> Registrarse
+          </button>
+        </div>
+
+        <!-- Formulario de Login -->
+        <div id="formLoginDiv">
+          <p class="text-gray-600 mb-4">Si ya estás registrado, ingresa tu RUT:</p>
+          <form id="formLogin" onsubmit="iniciarSesion(event)">
+            <div class="mb-6">
+              <label for="rutLogin" class="block text-gray-700 font-semibold mb-2">
+                RUT <span class="text-red-500">*</span>
+              </label>
+              <input type="text" id="rutLogin" name="rut" required
+                     class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-400 focus:border-transparent"
+                     placeholder="12345678-9"
+                     oninput="formatearRUT(this)">
+              <span id="errorRUTLogin" class="text-red-500 text-sm hidden"></span>
+              <p class="text-xs text-gray-500 mt-1">Formato: 12345678-9</p>
+            </div>
+
+            <div class="flex space-x-4">
+              <button type="button" onclick="cerrarModalRegistro()" 
+                      class="flex-1 bg-gray-200 hover:bg-gray-300 text-slate-800 font-bold py-3 px-6 rounded-lg transition-colors duration-200">
+                <i class="fas fa-times"></i> Cancelar
+              </button>
+              <button type="submit" 
+                      class="flex-1 bg-yellow-400 hover:bg-yellow-500 text-slate-900 font-bold py-3 px-6 rounded-lg transition-all duration-200 shadow-lg hover:shadow-xl flex items-center justify-center space-x-2">
+                <i class="fas fa-sign-in-alt"></i>
+                <span>Iniciar Sesión</span>
+              </button>
+            </div>
+          </form>
+        </div>
+
+        <!-- Formulario de Registro -->
+        <div id="formRegistroDiv" class="hidden">
+          <p class="text-gray-600 mb-4">Si eres nuevo, completa los siguientes datos:</p>
+          <form id="formRegistro" onsubmit="registrarUsuario(event)">
+            <div class="mb-4">
+              <label for="nombreCompleto" class="block text-gray-700 font-semibold mb-2">
+                Nombre Completo <span class="text-red-500">*</span>
+              </label>
+              <input type="text" id="nombreCompleto" name="nombre_completo" required
+                     class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-400 focus:border-transparent"
+                     placeholder="Ingresa tu nombre completo">
+              <span id="errorNombre" class="text-red-500 text-sm hidden"></span>
+            </div>
+
+            <div class="mb-6">
+              <label for="rut" class="block text-gray-700 font-semibold mb-2">
+                RUT <span class="text-red-500">*</span>
+              </label>
+              <input type="text" id="rut" name="rut" required
+                     class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-400 focus:border-transparent"
+                     placeholder="12345678-9"
+                     oninput="formatearRUT(this)">
+              <span id="errorRUT" class="text-red-500 text-sm hidden"></span>
+              <p class="text-xs text-gray-500 mt-1">Formato: 12345678-9</p>
+            </div>
+
+            <div class="flex space-x-4">
+              <button type="button" onclick="cerrarModalRegistro()" 
+                      class="flex-1 bg-gray-200 hover:bg-gray-300 text-slate-800 font-bold py-3 px-6 rounded-lg transition-colors duration-200">
+                <i class="fas fa-times"></i> Cancelar
+              </button>
+              <button type="submit" 
+                      class="flex-1 bg-yellow-400 hover:bg-yellow-500 text-slate-900 font-bold py-3 px-6 rounded-lg transition-all duration-200 shadow-lg hover:shadow-xl flex items-center justify-center space-x-2">
+                <i class="fas fa-check"></i>
+                <span>Registrarse</span>
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let productoActual = null;
+    let precioBaseProducto = 0;
+    let productoPendiente = null; // Para guardar el producto que se intentó agregar antes del registro
+
+    // Función para formatear número con puntos como separadores de miles
+    function formatearPrecio(numero) {
+      const numeroEntero = Math.round(numero);
+      return numeroEntero.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+    }
+
+    // Función para abrir el modal de agregados
+    function abrirModalAgregados(productoId, productoNombre, precio) {
+      productoActual = productoId;
+      precioBaseProducto = precio;
+      
+      // Actualizar el nombre del producto en el modal
+      document.getElementById('modalProductoNombre').textContent = `¿Qué agregados desea añadir a ${productoNombre}?`;
+      
+      // Cargar los agregados disponibles
+      fetch('/obtener_agregados/')
+        .then(response => response.json())
+        .then(data => {
+          const listaAgregados = document.getElementById('listaAgregados');
+          listaAgregados.innerHTML = '';
+          
+          if (data.agregados && data.agregados.length > 0) {
+            data.agregados.forEach(agregado => {
+              const agregadoDiv = document.createElement('div');
+              agregadoDiv.className = 'flex items-center justify-between p-4 border-2 border-gray-200 rounded-lg hover:border-yellow-400 transition-colors duration-200';
+              agregadoDiv.innerHTML = `
+                <div class="flex items-center space-x-3 flex-1">
+                  <input type="checkbox" 
+                         class="w-5 h-5 text-yellow-600 border-gray-300 rounded focus:ring-yellow-500 agregado-checkbox" 
+                         data-id="${agregado.id}" 
+                         data-precio="${agregado.precio}"
+                         data-nombre="${agregado.nombre}"
+                         onchange="actualizarPrecioTotal()">
+                  <div class="flex-1">
+                    <label class="font-semibold text-slate-800 cursor-pointer" onclick="this.previousElementSibling.click()">
+                      ${agregado.nombre}
+                    </label>
+                  </div>
+                </div>
+                <span class="text-lg font-bold text-yellow-600">$${formatearPrecio(agregado.precio)}</span>
+              `;
+              listaAgregados.appendChild(agregadoDiv);
+            });
+          } else {
+            listaAgregados.innerHTML = '<p class="text-gray-500 text-center py-4">No hay agregados disponibles</p>';
+          }
+          
+          // Mostrar precio base
+          document.getElementById('precioBase').textContent = `$${formatearPrecio(precio)}`;
+          actualizarPrecioTotal();
+          
+          // Mostrar el modal
+          document.getElementById('modalAgregados').classList.remove('hidden');
+          document.body.style.overflow = 'hidden';
+        })
+        .catch(error => {
+          console.error('Error:', error);
+          alert('Error al cargar los agregados');
+        });
+    }
+
+    // Función para cerrar el modal
+    function cerrarModalAgregados() {
+      document.getElementById('modalAgregados').classList.add('hidden');
+      document.body.style.overflow = '';
+      productoActual = null;
+      precioBaseProducto = 0;
+    }
+
+    // Función para actualizar el precio total
+    function actualizarPrecioTotal() {
+      const checkboxes = document.querySelectorAll('.agregado-checkbox:checked');
+      let precioAgregados = 0;
+      
+      checkboxes.forEach(checkbox => {
+        precioAgregados += parseFloat(checkbox.dataset.precio);
+      });
+      
+      const precioTotal = precioBaseProducto + precioAgregados;
+      
+      document.getElementById('precioAgregados').textContent = `$${formatearPrecio(precioAgregados)}`;
+      document.getElementById('precioTotal').textContent = `$${formatearPrecio(precioTotal)}`;
+    }
+
+    // Función para confirmar y agregar al carrito con agregados
+    function confirmarAgregarConAgregados() {
+      if (!productoActual) return;
+      
+      const checkboxes = document.querySelectorAll('.agregado-checkbox:checked');
+      const agregadosSeleccionados = Array.from(checkboxes).map(checkbox => ({
+        id: parseInt(checkbox.dataset.id),
+        nombre: checkbox.dataset.nombre,
+        precio: parseFloat(checkbox.dataset.precio)
+      }));
+      
+      // Llamar a la API para agregar al carrito
+      fetch(`/agregar_carrito/${productoActual}/`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRFToken': getCookie('csrftoken')
+        },
+        body: JSON.stringify({
+          agregados: agregadosSeleccionados
+        })
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.error === 'registro_requerido') {
+          // Guardar el producto pendiente y mostrar modal de registro
+          productoPendiente = {
+            id: productoActual,
+            agregados: agregadosSeleccionados
+          };
+          cerrarModalAgregados();
+          abrirModalRegistro();
+          return;
+        }
+        
+        // Mostrar notificación de éxito
+        const toast = document.createElement('div');
+        toast.className = 'fixed top-20 right-4 z-50 bg-green-500 text-white p-4 rounded-lg shadow-lg opacity-100 transition-opacity duration-500';
+        toast.innerHTML = `<div class="flex items-center space-x-2"><i class="fas fa-check-circle"></i><p>${data.mensaje}</p></div>`;
+        document.body.appendChild(toast);
+        
+        setTimeout(() => {
+          toast.classList.add('opacity-0');
+          setTimeout(() => toast.remove(), 500);
+        }, 3000);
+        
+        // Cerrar el modal
+        cerrarModalAgregados();
+        
+        // Recargar la página para actualizar el contador del carrito
+        setTimeout(() => {
+          window.location.reload();
+        }, 500);
+      })
+      .catch(error => {
+        console.error('Error:', error);
+        alert('Error al agregar el producto al carrito');
+      });
+    }
+
+    // Funciones para el modal de registro/login
+    function abrirModalRegistro() {
+      document.getElementById('modalRegistro').classList.remove('hidden');
+      document.body.style.overflow = 'hidden';
+      mostrarFormularioLogin(); // Mostrar login por defecto
+    }
+
+    function cerrarModalRegistro() {
+      document.getElementById('modalRegistro').classList.add('hidden');
+      document.body.style.overflow = '';
+      // Limpiar formularios
+      document.getElementById('formRegistro').reset();
+      document.getElementById('formLogin').reset();
+      document.getElementById('errorNombre').classList.add('hidden');
+      document.getElementById('errorRUT').classList.add('hidden');
+      document.getElementById('errorRUTLogin').classList.add('hidden');
+    }
+
+    function mostrarFormularioLogin() {
+      document.getElementById('formLoginDiv').classList.remove('hidden');
+      document.getElementById('formRegistroDiv').classList.add('hidden');
+      document.getElementById('tabLogin').classList.add('border-yellow-400', 'text-yellow-600');
+      document.getElementById('tabLogin').classList.remove('border-transparent', 'text-gray-500');
+      document.getElementById('tabRegistro').classList.remove('border-yellow-400', 'text-yellow-600');
+      document.getElementById('tabRegistro').classList.add('border-transparent', 'text-gray-500');
+      document.getElementById('modalTitulo').textContent = 'Iniciar Sesión';
+    }
+
+    function mostrarFormularioRegistro() {
+      document.getElementById('formLoginDiv').classList.add('hidden');
+      document.getElementById('formRegistroDiv').classList.remove('hidden');
+      document.getElementById('tabRegistro').classList.add('border-yellow-400', 'text-yellow-600');
+      document.getElementById('tabRegistro').classList.remove('border-transparent', 'text-gray-500');
+      document.getElementById('tabLogin').classList.remove('border-yellow-400', 'text-yellow-600');
+      document.getElementById('tabLogin').classList.add('border-transparent', 'text-gray-500');
+      document.getElementById('modalTitulo').textContent = 'Registrarse';
+    }
+
+    // Función para formatear RUT
+    function formatearRUT(input) {
+      let rut = input.value.replace(/\./g, '').replace(/-/g, '').toUpperCase();
+      
+      if (rut.length > 0) {
+        // Agregar puntos cada 3 dígitos desde el final
+        let rutFormateado = '';
+        let contador = 0;
+        for (let i = rut.length - 1; i >= 0; i--) {
+          if (contador === 3 && i > 0) {
+            rutFormateado = '.' + rutFormateado;
+            contador = 0;
+          }
+          rutFormateado = rut[i] + rutFormateado;
+          contador++;
+        }
+        
+        // Agregar guión antes del último carácter si es un dígito verificador
+        if (rut.length > 1) {
+          const cuerpo = rut.slice(0, -1);
+          const dv = rut.slice(-1);
+          rutFormateado = cuerpo.replace(/\B(?=(\d{3})+(?!\d))/g, '.') + '-' + dv;
+        }
+        
+        input.value = rutFormateado;
+      }
+    }
+
+    // Función para iniciar sesión
+    function iniciarSesion(event) {
+      event.preventDefault();
+      
+      const rut = document.getElementById('rutLogin').value.trim();
+      
+      // Limpiar errores previos
+      document.getElementById('errorRUTLogin').classList.add('hidden');
+      
+      if (!rut) {
+        document.getElementById('errorRUTLogin').textContent = 'El RUT es obligatorio';
+        document.getElementById('errorRUTLogin').classList.remove('hidden');
+        return;
+      }
+      
+      // Enviar login
+      fetch('/iniciar_sesion/', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRFToken': getCookie('csrftoken')
+        },
+        body: JSON.stringify({
+          rut: rut
+        })
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.error) {
+          document.getElementById('errorRUTLogin').textContent = data.error;
+          document.getElementById('errorRUTLogin').classList.remove('hidden');
+          return;
+        }
+        
+        // Mostrar notificación de éxito
+        const toast = document.createElement('div');
+        toast.className = 'fixed top-20 right-4 z-50 bg-green-500 text-white p-4 rounded-lg shadow-lg opacity-100 transition-opacity duration-500';
+        toast.innerHTML = `<div class="flex items-center space-x-2"><i class="fas fa-check-circle"></i><p>${data.mensaje}</p></div>`;
+        document.body.appendChild(toast);
+        
+        setTimeout(() => {
+          toast.classList.add('opacity-0');
+          setTimeout(() => toast.remove(), 500);
+        }, 3000);
+        
+        // Cerrar modal de login
+        cerrarModalRegistro();
+        
+        // Si hay un producto pendiente, agregarlo ahora
+        if (productoPendiente) {
+          setTimeout(() => {
+            fetch(`/agregar_carrito/${productoPendiente.id}/`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+              },
+              body: JSON.stringify({
+                agregados: productoPendiente.agregados
+              })
+            })
+            .then(response => response.json())
+            .then(data => {
+              if (data.mensaje) {
+                window.location.reload();
+              }
+            });
+            productoPendiente = null;
+          }, 500);
+        } else {
+          window.location.reload();
+        }
+      })
+      .catch(error => {
+        console.error('Error:', error);
+        document.getElementById('errorRUTLogin').textContent = 'Error al iniciar sesión. Intenta nuevamente.';
+        document.getElementById('errorRUTLogin').classList.remove('hidden');
+      });
+    }
+
+    // Función para registrar usuario
+    function registrarUsuario(event) {
+      event.preventDefault();
+      
+      const nombreCompleto = document.getElementById('nombreCompleto').value.trim();
+      const rut = document.getElementById('rut').value.trim();
+      
+      // Limpiar errores previos
+      document.getElementById('errorNombre').classList.add('hidden');
+      document.getElementById('errorRUT').classList.add('hidden');
+      
+      if (!nombreCompleto) {
+        document.getElementById('errorNombre').textContent = 'El nombre completo es obligatorio';
+        document.getElementById('errorNombre').classList.remove('hidden');
+        return;
+      }
+      
+      if (!rut) {
+        document.getElementById('errorRUT').textContent = 'El RUT es obligatorio';
+        document.getElementById('errorRUT').classList.remove('hidden');
+        return;
+      }
+      
+      // Enviar registro
+      fetch('/registrar_usuario/', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRFToken': getCookie('csrftoken')
+        },
+        body: JSON.stringify({
+          nombre_completo: nombreCompleto,
+          rut: rut
+        })
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.error) {
+          if (data.error.includes('nombre')) {
+            document.getElementById('errorNombre').textContent = data.error;
+            document.getElementById('errorNombre').classList.remove('hidden');
+          } else {
+            document.getElementById('errorRUT').textContent = data.error;
+            document.getElementById('errorRUT').classList.remove('hidden');
+          }
+          return;
+        }
+        
+        // Mostrar notificación de éxito
+        const toast = document.createElement('div');
+        toast.className = 'fixed top-20 right-4 z-50 bg-green-500 text-white p-4 rounded-lg shadow-lg opacity-100 transition-opacity duration-500';
+        toast.innerHTML = `<div class="flex items-center space-x-2"><i class="fas fa-check-circle"></i><p>${data.mensaje}</p></div>`;
+        document.body.appendChild(toast);
+        
+        setTimeout(() => {
+          toast.classList.add('opacity-0');
+          setTimeout(() => toast.remove(), 500);
+        }, 3000);
+        
+        // Cerrar modal de registro
+        cerrarModalRegistro();
+        
+        // Si hay un producto pendiente, agregarlo ahora
+        if (productoPendiente) {
+          setTimeout(() => {
+            fetch(`/agregar_carrito/${productoPendiente.id}/`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+              },
+              body: JSON.stringify({
+                agregados: productoPendiente.agregados
+              })
+            })
+            .then(response => response.json())
+            .then(data => {
+              if (data.mensaje) {
+                window.location.reload();
+              }
+            });
+            productoPendiente = null;
+          }, 500);
+        } else {
+          window.location.reload();
+        }
+      })
+      .catch(error => {
+        console.error('Error:', error);
+        document.getElementById('errorRUT').textContent = 'Error al registrar. Intenta nuevamente.';
+        document.getElementById('errorRUT').classList.remove('hidden');
+      });
+    }
+
+    // Función para obtener el token CSRF
+    function getCookie(name) {
+      let cookieValue = null;
+      if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+          const cookie = cookies[i].trim();
+          if (cookie.substring(0, name.length + 1) === (name + '=')) {
+            cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+            break;
+          }
+        }
+      }
+      return cookieValue;
+    }
+
+    // Cerrar el modal al hacer clic fuera de él
+    document.getElementById('modalAgregados').addEventListener('click', function(e) {
+      if (e.target === this) {
+        cerrarModalAgregados();
+      }
+    });
+
+    document.getElementById('modalRegistro').addEventListener('click', function(e) {
+      if (e.target === this) {
+        cerrarModalRegistro();
+      }
+    });
+  </script>
+</body>
+</html>
+
+
+
+

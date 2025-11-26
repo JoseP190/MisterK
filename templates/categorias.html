@@ -1,0 +1,155 @@
+{% extends "base.html" %}
+{% load static %}
+{% load formato_precio %}
+
+{% block title %}{{ categoria.nombre_categoria }} - Mister K{% endblock %}
+
+{% block header_title %}MISTER K{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+  <!-- Título de la categoría -->
+  <div class="mb-8 text-center">
+    <h2 class="text-4xl font-bold text-slate-800 mb-2 flex items-center justify-center space-x-3">
+      <i class="fas fa-tag text-yellow-500"></i>
+      <span>{{ categoria.nombre_categoria }}</span>
+    </h2>
+    <div class="h-1 w-32 bg-yellow-400 rounded mx-auto"></div>
+    <p class="text-gray-600 mt-4">Explora nuestros productos de esta categoría</p>
+  </div>
+
+  <!-- Navegación de categorías -->
+  {% if categorias %}
+    <div class="mb-8 flex flex-wrap justify-center gap-3">
+      {% for c in categorias %}
+        <a href="/categoria/{{ c.id }}/" 
+           class="{% if c.id == categoria.id %}bg-yellow-400 text-slate-900{% else %}bg-white hover:bg-yellow-400 text-slate-800 hover:text-white{% endif %} border-2 border-yellow-400 font-bold px-6 py-2 rounded-lg transition-all duration-200 shadow-md hover:shadow-lg transform hover:scale-105">
+          {{ c.nombre_categoria }}
+        </a>
+      {% endfor %}
+    </div>
+  {% endif %}
+
+  <!-- Grid de productos de la categoría -->
+  {% if productos_en_categoria %}
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+      {% for p in productos_en_categoria %}
+        <div class="bg-white rounded-lg shadow-lg overflow-hidden hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 cursor-pointer"
+             onClick="window.location.href='/producto/{{ p.id }}/'">
+          <!-- Imagen del producto -->
+          <div class="relative h-48 bg-gray-100 overflow-hidden">
+            {% if p.imagen %}
+              <img class="object-cover w-full h-full hover:scale-110 transition-transform duration-300" 
+                   src="{{ p.imagen.url }}" alt="{{ p.nombre }}">
+            {% else %}
+              <img class="object-cover w-full h-full hover:scale-110 transition-transform duration-300" 
+                   src="{% static 'images/default_image.png' %}" alt="Imagen por defecto">
+            {% endif %}
+            
+            {% if p.oferta == 1 %}
+              <div class="absolute top-4 right-4 bg-red-500 text-white px-3 py-1 rounded-full font-bold text-sm shadow-lg">
+                -{{ p.porcentajeOferta }}%
+              </div>
+            {% endif %}
+          </div>
+
+          <!-- Contenido de la tarjeta -->
+          <div class="p-5">
+            <h4 class="text-xl font-bold text-slate-800 mb-2">{{ p.nombre }}</h4>
+            <p class="text-gray-600 text-sm mb-4 line-clamp-2">{{ p.descripcion }}</p>
+
+            <div class="flex items-center justify-between gap-2">
+            {% if p.oferta == 1 %}
+              <div class="flex flex-col">
+                <span class="text-gray-400 line-through text-sm">${{ p.precio|formato_precio }}</span>
+                <span class="text-2xl font-bold text-yellow-600">${{ p.precio_con_descuento|formato_precio }}</span>
+              </div>
+            {% else %}
+              <span class="text-2xl font-bold text-yellow-600">${{ p.precio|formato_precio }}</span>
+            {% endif %}
+              
+              <div class="flex gap-2">
+                <a href="/producto/{{ p.id }}/" class="bg-blue-400 hover:bg-blue-500 text-white font-bold py-2 px-4 rounded-lg transition-colors duration-200">
+                  <i class="fas fa-eye"></i>
+                </a>
+                <button onclick="event.stopPropagation(); abrirModalAgregados({{ p.id }}, '{{ p.nombre }}', {% if p.oferta %}{{ p.precio_con_descuento }}{% else %}{{ p.precio }}{% endif %})" 
+                        class="bg-yellow-400 hover:bg-yellow-500 text-slate-900 font-bold py-2 px-4 rounded-lg transition-colors duration-200">
+                  <i class="fas fa-cart-plus"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <!-- Mensaje cuando no hay productos -->
+    <div class="text-center py-12 bg-white rounded-lg shadow-lg">
+      <i class="fas fa-inbox text-gray-300 text-6xl mb-4"></i>
+      <h3 class="text-2xl font-bold text-slate-800 mb-2">No hay productos en esta categoría</h3>
+      <p class="text-gray-600 mb-6">Pronto agregaremos productos deliciosos aquí</p>
+      <a href="{% url 'menu' %}" class="inline-flex items-center space-x-2 bg-yellow-400 hover:bg-yellow-500 text-slate-900 font-bold py-3 px-6 rounded-lg transition-all duration-200 shadow-md hover:shadow-lg">
+        <i class="fas fa-arrow-left"></i>
+        <span>Volver al Menú</span>
+      </a>
+    </div>
+  {% endif %}
+
+  <!-- Paginación -->
+  {% if productos_en_categoria.has_other_pages %}
+    <div class="mt-12 flex justify-center">
+      <nav class="flex items-center space-x-2" aria-label="Paginación">
+        {% if productos_en_categoria.has_previous %}
+          <a href="{% url 'categoria' categoria.id %}?page={{ productos_en_categoria.previous_page_number }}" 
+             class="px-4 py-2 bg-white border-2 border-yellow-400 text-slate-800 font-bold rounded-lg hover:bg-yellow-400 hover:text-white transition-all duration-200 shadow-md hover:shadow-lg">
+            <i class="fas fa-chevron-left"></i> Anterior
+          </a>
+        {% else %}
+          <span class="px-4 py-2 bg-gray-200 text-gray-400 font-bold rounded-lg cursor-not-allowed">
+            <i class="fas fa-chevron-left"></i> Anterior
+          </span>
+        {% endif %}
+
+        <div class="flex items-center space-x-1">
+          {% for num in productos_en_categoria.paginator.page_range %}
+            {% if productos_en_categoria.number == num %}
+              <span class="px-4 py-2 bg-yellow-400 text-slate-900 font-bold rounded-lg shadow-lg">
+                {{ num }}
+              </span>
+            {% elif num > productos_en_categoria.number|add:'-3' and num < productos_en_categoria.number|add:'3' %}
+              <a href="{% url 'categoria' categoria.id %}?page={{ num }}" 
+                 class="px-4 py-2 bg-white border-2 border-yellow-400 text-slate-800 font-bold rounded-lg hover:bg-yellow-400 hover:text-white transition-all duration-200 shadow-md hover:shadow-lg">
+                {{ num }}
+              </a>
+            {% endif %}
+          {% endfor %}
+        </div>
+
+        {% if productos_en_categoria.has_next %}
+          <a href="{% url 'categoria' categoria.id %}?page={{ productos_en_categoria.next_page_number }}" 
+             class="px-4 py-2 bg-white border-2 border-yellow-400 text-slate-800 font-bold rounded-lg hover:bg-yellow-400 hover:text-white transition-all duration-200 shadow-md hover:shadow-lg">
+            Siguiente <i class="fas fa-chevron-right"></i>
+          </a>
+        {% else %}
+          <span class="px-4 py-2 bg-gray-200 text-gray-400 font-bold rounded-lg cursor-not-allowed">
+            Siguiente <i class="fas fa-chevron-right"></i>
+          </span>
+        {% endif %}
+      </nav>
+    </div>
+
+    <!-- Información de paginación -->
+    <div class="mt-4 text-center text-gray-600">
+      <p class="text-sm">
+        Mostrando página <span class="font-bold text-slate-800">{{ productos_en_categoria.number }}</span> de 
+        <span class="font-bold text-slate-800">{{ productos_en_categoria.paginator.num_pages }}</span>
+        (Total: {{ productos_en_categoria.paginator.count }} productos)
+      </p>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}
+
+{% block footer %}
+  &copy; 2024 Mister K. Todos los derechos reservados.
+{% endblock %}

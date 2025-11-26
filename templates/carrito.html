@@ -1,0 +1,231 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load formato_precio %}
+
+{% block title %}Carrito de Compras - Mister K{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8 max-w-4xl">
+  {% if messages %}
+  <div class="fixed top-20 right-4 z-50">
+    {% for message in messages %}
+      <div class="toast bg-green-500 text-white p-4 rounded-lg shadow-lg mb-4 max-w-xs opacity-100 transition-opacity duration-500 ease-in-out">
+        <div class="flex items-center space-x-2">
+          <i class="fas fa-check-circle"></i>
+          <p>{{ message }}</p>
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <!-- Modal de éxito del pedido -->
+  <div id="modalExitoPedido" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-lg shadow-2xl max-w-md w-full">
+      <div class="p-6 text-center">
+        <div class="mb-4">
+          <i class="fas fa-check-circle text-green-500 text-6xl"></i>
+        </div>
+        <h3 class="text-2xl font-bold text-slate-800 mb-2">Pedido realizado con éxito</h3>
+        <p class="text-gray-600 mb-6">Tu pedido ha sido registrado y está siendo procesado.</p>
+        <button onclick="cerrarModalExito()" 
+                class="bg-yellow-400 hover:bg-yellow-500 text-slate-900 font-bold py-3 px-6 rounded-lg transition-all duration-200 shadow-lg hover:shadow-xl">
+          Aceptar
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Título del carrito -->
+  <div class="mb-8">
+    <h2 class="text-4xl font-bold text-slate-800 mb-2 flex items-center space-x-3">
+      <i class="fas fa-shopping-cart text-yellow-500"></i>
+      <span>Carrito de pedido</span>
+    </h2>
+    <div class="h-1 w-24 bg-yellow-400 rounded"></div>
+  </div>
+
+  {% if carrito %}
+    <!-- Panel de productos del carrito -->
+    <div class="bg-white rounded-lg shadow-xl overflow-hidden mb-6">
+      <div class="divide-y divide-gray-200">
+        {% for key, item in carrito.items %}
+          <div class="p-6 hover:bg-gray-50 transition-colors duration-200">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center space-x-4 flex-1">
+                <div class="bg-yellow-100 rounded-full p-3">
+                  <i class="fas fa-hamburger text-yellow-600 text-xl"></i>
+                </div>
+                <div class="flex-1">
+                  <h3 class="text-xl font-bold text-slate-800 mb-1">{{ item.nombre }}</h3>
+                  <div class="flex items-center space-x-4 text-gray-600 mb-2">
+                    <span class="text-sm">Cantidad: <span class="font-bold text-slate-800">{{ item.cantidad }}</span></span>
+                    <span class="text-sm">Precio unitario: <span class="font-bold text-slate-800">${{ item.precio|formato_precio }}</span></span>
+                  </div>
+                  {% if item.agregados %}
+                    <div class="mt-2">
+                      <p class="text-xs font-semibold text-gray-500 mb-1">Agregados:</p>
+                      <div class="flex flex-wrap gap-2">
+                        {% for agregado in item.agregados %}
+                          <span class="px-2 py-1 bg-yellow-100 text-yellow-800 text-xs font-semibold rounded-full">
+                            +{{ agregado.nombre }} (${{ agregado.precio|formato_precio }})
+                          </span>
+                        {% endfor %}
+                      </div>
+                    </div>
+                  {% endif %}
+                </div>
+              </div>
+              
+              <div class="flex items-center space-x-6">
+                <div class="text-right">
+                  <p class="text-sm text-gray-500 mb-1">Subtotal</p>
+                  <p class="text-2xl font-bold text-yellow-600">${{ item.subtotal|formato_precio }}</p>
+                </div>
+                
+                <!-- Formulario de eliminación -->
+                <form action="{% url 'eliminar_producto' key %}" method="POST">
+                  {% csrf_token %}
+                  <button type="submit" class="bg-red-500 hover:bg-red-600 text-white p-2 rounded-lg transition-colors duration-200 shadow-md hover:shadow-lg">
+                    <i class="fas fa-trash-alt"></i>
+                  </button>
+                </form>
+              </div>
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- Sección de Forma de Pago -->
+    <div class="bg-white rounded-lg shadow-xl p-6 mb-6">
+      <h3 class="text-2xl font-bold text-slate-800 mb-4 flex items-center space-x-2">
+        <i class="fas fa-money-bill-wave text-yellow-500"></i>
+        <span>Forma de pago</span>
+      </h3>
+      <div class="flex space-x-4">
+        <button type="button" id="btnTransferencia" onclick="seleccionarFormaPago('Transferencia')" 
+                class="flex-1 py-3 px-6 border-2 border-gray-300 rounded-lg font-semibold transition-all duration-200 hover:border-yellow-400 hover:bg-yellow-50">
+          <i class="fas fa-university mr-2"></i>
+          Transferencia
+        </button>
+        <button type="button" id="btnEfectivo" onclick="seleccionarFormaPago('Efectivo')" 
+                class="flex-1 py-3 px-6 border-2 border-gray-300 rounded-lg font-semibold transition-all duration-200 hover:border-yellow-400 hover:bg-yellow-50">
+          <i class="fas fa-money-bill mr-2"></i>
+          Efectivo
+        </button>
+      </div>
+      <input type="hidden" id="formaPago" name="forma_pago" value="">
+      <span id="errorFormaPago" class="text-red-500 text-sm hidden block mt-2">Debes seleccionar una forma de pago</span>
+    </div>
+
+    <!-- Panel de resumen y total -->
+    <div class="bg-gradient-to-r from-slate-800 to-slate-900 rounded-lg shadow-xl p-6 text-white mb-6">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="text-2xl font-bold flex items-center space-x-2">
+          <i class="fas fa-receipt text-yellow-400"></i>
+          <span>Resumen de Compra</span>
+        </h3>
+      </div>
+      
+      <div class="space-y-3 mb-6">
+        <div class="flex justify-between text-lg">
+          <span class="text-gray-300">Subtotal:</span>
+          <span class="font-semibold">${{ total|formato_precio }}</span>
+        </div>
+        <div class="h-px bg-gray-600"></div>
+        <div class="flex justify-between items-center">
+          <span class="text-xl font-semibold">Total:</span>
+          <span class="text-3xl font-bold text-yellow-400">${{ total|formato_precio }}</span>
+        </div>
+      </div>
+
+      <form id="formPedido" action="{% url 'procesar_compra' %}" method="post" onsubmit="validarFormaPago(event)">
+        {% csrf_token %}
+        <input type="hidden" name="forma_pago" id="formaPagoInput" value="">
+        <button type="submit" class="w-full bg-yellow-400 hover:bg-yellow-500 text-slate-900 font-bold py-4 px-6 rounded-lg transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105 flex items-center justify-center space-x-2">
+          <i class="fas fa-shopping-bag"></i>
+          <span>Realizar pedido</span>
+        </button>
+      </form>
+    </div>
+
+    <!-- Botón para seguir comprando -->
+    <div class="text-center">
+      <a href="{% url 'menu' %}" class="inline-flex items-center space-x-2 text-slate-700 hover:text-yellow-600 font-semibold transition-colors duration-200">
+        <i class="fas fa-arrow-left"></i>
+        <span>Seguir Comprando</span>
+      </a>
+    </div>
+
+  {% else %}
+    <!-- Carrito vacío -->
+    <div class="bg-white rounded-lg shadow-xl p-12 text-center">
+      <div class="mb-6">
+        <i class="fas fa-shopping-cart text-gray-300 text-6xl mb-4"></i>
+      </div>
+      <h3 class="text-2xl font-bold text-slate-800 mb-2">Tu carrito está vacío</h3>
+      <p class="text-gray-600 mb-6">Agrega productos deliciosos a tu carrito para comenzar</p>
+      <a href="{% url 'menu' %}" class="inline-flex items-center space-x-2 bg-yellow-400 hover:bg-yellow-500 text-slate-900 font-bold py-3 px-6 rounded-lg transition-all duration-200 shadow-md hover:shadow-lg">
+        <i class="fas fa-utensils"></i>
+        <span>Explorar Menú</span>
+      </a>
+    </div>
+  {% endif %}
+</div>
+
+<script>
+  // Mostrar modal de éxito si hay mensaje de éxito
+  {% if messages %}
+    {% for message in messages %}
+      {% if 'éxito' in message|lower or 'exito' in message|lower %}
+        document.addEventListener('DOMContentLoaded', function() {
+          document.getElementById('modalExitoPedido').classList.remove('hidden');
+        });
+      {% endif %}
+    {% endfor %}
+  {% endif %}
+
+  function cerrarModalExito() {
+    document.getElementById('modalExitoPedido').classList.add('hidden');
+  }
+
+  let formaPagoSeleccionada = '';
+
+  function seleccionarFormaPago(forma) {
+    formaPagoSeleccionada = forma;
+    document.getElementById('formaPago').value = forma;
+    document.getElementById('formaPagoInput').value = forma;
+    document.getElementById('errorFormaPago').classList.add('hidden');
+    
+    // Actualizar estilos de los botones
+    const btnTransferencia = document.getElementById('btnTransferencia');
+    const btnEfectivo = document.getElementById('btnEfectivo');
+    
+    if (forma === 'Transferencia') {
+      btnTransferencia.classList.add('border-yellow-400', 'bg-yellow-50', 'text-yellow-600');
+      btnTransferencia.classList.remove('border-gray-300');
+      btnEfectivo.classList.remove('border-yellow-400', 'bg-yellow-50', 'text-yellow-600');
+      btnEfectivo.classList.add('border-gray-300');
+    } else {
+      btnEfectivo.classList.add('border-yellow-400', 'bg-yellow-50', 'text-yellow-600');
+      btnEfectivo.classList.remove('border-gray-300');
+      btnTransferencia.classList.remove('border-yellow-400', 'bg-yellow-50', 'text-yellow-600');
+      btnTransferencia.classList.add('border-gray-300');
+    }
+  }
+
+  function validarFormaPago(event) {
+    if (!formaPagoSeleccionada) {
+      event.preventDefault();
+      document.getElementById('errorFormaPago').classList.remove('hidden');
+      return false;
+    }
+    return true;
+  }
+</script>
+{% endblock %}
+
+{% block footer %}
+  &copy; 2024 Mister K. Todos los derechos reservados.
+{% endblock %}

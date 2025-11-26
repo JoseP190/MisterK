@@ -1,0 +1,355 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Iniciar Sesión - Mister K{% endblock %}
+
+{% block header_title %}MISTER K{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-12">
+  <div class="max-w-md mx-auto space-y-6">
+    <!-- Panel de login de usuarios -->
+    <div class="bg-white rounded-lg shadow-2xl overflow-hidden">
+      <!-- Header del panel -->
+      <div class="bg-gradient-to-r from-slate-800 to-slate-900 px-8 py-6 text-center">
+        <div class="mb-4">
+          <i class="fas fa-user text-yellow-400 text-5xl"></i>
+        </div>
+        <h2 class="text-3xl font-bold text-white mb-2">Iniciar Sesión</h2>
+        <p class="text-gray-300 text-sm">Ingresa con tu RUT para continuar</p>
+      </div>
+
+      <!-- Formulario de login de usuarios -->
+      <div class="px-8 py-8">
+        <form id="formLoginUsuario" onsubmit="iniciarSesionUsuario(event)">
+          {% csrf_token %}
+          
+          <!-- Campo RUT -->
+          <div class="mb-6">
+            <label for="rutLoginUsuario" class="block text-sm font-bold text-slate-700 mb-2">
+              <i class="fas fa-id-card text-yellow-500"></i> RUT
+            </label>
+            <input 
+              type="text" 
+              name="rut" 
+              id="rutLoginUsuario" 
+              class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-yellow-400 focus:ring-2 focus:ring-yellow-400 focus:outline-none transition-all duration-200" 
+              placeholder="12345678-9"
+              required
+              autofocus
+              oninput="formatearRUT(this)">
+            <span id="errorRUTUsuario" class="text-red-500 text-sm hidden block mt-1"></span>
+            <p class="text-xs text-gray-500 mt-1">Formato: 12345678-9</p>
+          </div>
+
+          <!-- Mensajes de error -->
+          <div id="mensajeErrorUsuario" class="mb-4 hidden">
+            <div class="p-3 bg-red-100 border-l-4 border-red-500 text-red-700 rounded-lg flex items-center space-x-2">
+              <i class="fas fa-exclamation-circle"></i>
+              <p class="text-sm font-semibold" id="textoErrorUsuario"></p>
+            </div>
+          </div>
+
+          <!-- Botón de envío -->
+          <button 
+            type="submit" 
+            class="w-full bg-yellow-400 hover:bg-yellow-500 text-slate-900 font-bold py-4 px-6 rounded-lg transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105 flex items-center justify-center space-x-2">
+            <i class="fas fa-sign-in-alt"></i>
+            <span>Iniciar Sesión</span>
+          </button>
+        </form>
+
+        <!-- Link para registrarse -->
+        <div class="mt-4 text-center" id="linkRegistro">
+          <p class="text-gray-600 text-sm mb-2">¿No tienes cuenta?</p>
+          <button onclick="mostrarRegistro()" class="text-yellow-600 hover:text-yellow-700 font-semibold text-sm transition-colors duration-200">
+            Regístrate aquí
+          </button>
+        </div>
+
+        <!-- Formulario de registro (oculto inicialmente) -->
+        <div id="formRegistroDiv" class="hidden">
+          <div class="mt-4 text-center mb-4">
+            <p class="text-gray-600 text-sm mb-2">¿Ya tienes cuenta?</p>
+            <button onclick="mostrarLogin()" class="text-yellow-600 hover:text-yellow-700 font-semibold text-sm transition-colors duration-200">
+              Inicia sesión aquí
+            </button>
+          </div>
+          <form id="formRegistroUsuario" onsubmit="registrarUsuarioDesdeLogin(event)">
+            <div class="mb-4">
+              <label for="nombreCompletoRegistro" class="block text-sm font-bold text-slate-700 mb-2">
+                <i class="fas fa-user text-yellow-500"></i> Nombre Completo
+              </label>
+              <input 
+                type="text" 
+                name="nombre_completo" 
+                id="nombreCompletoRegistro" 
+                class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-yellow-400 focus:ring-2 focus:ring-yellow-400 focus:outline-none transition-all duration-200" 
+                placeholder="Ingresa tu nombre completo"
+                required>
+              <span id="errorNombreRegistro" class="text-red-500 text-sm hidden block mt-1"></span>
+            </div>
+
+            <div class="mb-6">
+              <label for="rutRegistro" class="block text-sm font-bold text-slate-700 mb-2">
+                <i class="fas fa-id-card text-yellow-500"></i> RUT
+              </label>
+              <input 
+                type="text" 
+                name="rut" 
+                id="rutRegistro" 
+                class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-yellow-400 focus:ring-2 focus:ring-yellow-400 focus:outline-none transition-all duration-200" 
+                placeholder="12345678-9"
+                required
+                oninput="formatearRUT(this)">
+              <span id="errorRUTRegistro" class="text-red-500 text-sm hidden block mt-1"></span>
+              <p class="text-xs text-gray-500 mt-1">Formato: 12345678-9</p>
+            </div>
+
+            <button 
+              type="submit" 
+              class="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-6 rounded-lg transition-all duration-200 shadow-lg hover:shadow-xl flex items-center justify-center space-x-2">
+              <i class="fas fa-user-plus"></i>
+              <span>Registrarse</span>
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- Panel de login de admin (oculto) -->
+    <div class="bg-white rounded-lg shadow-xl overflow-hidden">
+      <button 
+        onclick="toggleAdminLogin()" 
+        class="w-full px-6 py-3 bg-gray-100 hover:bg-gray-200 text-gray-600 font-semibold flex items-center justify-center space-x-2 transition-colors duration-200">
+        <i class="fas fa-chevron-down" id="iconAdminToggle"></i>
+        <span>Acceso Administrador</span>
+      </button>
+      
+      <div id="adminLoginDiv" class="hidden px-8 py-6 border-t border-gray-200">
+        <p class="text-xs text-gray-500 mb-4 text-center">Acceso exclusivo para administradores</p>
+        
+        <form method="POST" action="{% url 'login' %}">
+          {% csrf_token %}
+          
+          <!-- Campo Usuario -->
+          <div class="mb-4">
+            <label for="username" class="block text-sm font-bold text-slate-700 mb-2">
+              <i class="fas fa-user-shield text-gray-500"></i> Usuario Admin
+            </label>
+            <input 
+              type="text" 
+              name="username" 
+              id="username" 
+              class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-gray-400 focus:ring-2 focus:ring-gray-400 focus:outline-none transition-all duration-200" 
+              placeholder="Usuario administrador"
+              required>
+          </div>
+
+          <!-- Campo Contraseña -->
+          <div class="mb-4">
+            <label for="password" class="block text-sm font-bold text-slate-700 mb-2">
+              <i class="fas fa-lock text-gray-500"></i> Contraseña
+            </label>
+            <input 
+              type="password" 
+              name="password" 
+              id="password" 
+              class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-gray-400 focus:ring-2 focus:ring-gray-400 focus:outline-none transition-all duration-200" 
+              placeholder="Contraseña"
+              required>
+          </div>
+
+          <!-- Mensajes de error -->
+          {% if messages %}
+            {% for message in messages %}
+              <div class="mb-4 p-3 bg-red-100 border-l-4 border-red-500 text-red-700 rounded-lg flex items-center space-x-2">
+                <i class="fas fa-exclamation-circle"></i>
+                <p class="text-sm font-semibold">{{ message }}</p>
+              </div>
+            {% endfor %}
+          {% endif %}
+
+          <!-- Botón de envío -->
+          <button 
+            type="submit" 
+            class="w-full bg-gray-600 hover:bg-gray-700 text-white font-bold py-3 px-6 rounded-lg transition-all duration-200 shadow-lg hover:shadow-xl flex items-center justify-center space-x-2">
+            <i class="fas fa-shield-alt"></i>
+            <span>Acceder como Admin</span>
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <!-- Link de regreso -->
+    <div class="text-center">
+      <a href="{% url 'index' %}" class="text-slate-600 hover:text-yellow-600 font-semibold text-sm transition-colors duration-200 inline-flex items-center space-x-1">
+        <i class="fas fa-arrow-left"></i>
+        <span>Volver al inicio</span>
+      </a>
+    </div>
+  </div>
+</div>
+
+<script>
+  function formatearRUT(input) {
+    let rut = input.value.replace(/\./g, '').replace(/-/g, '').toUpperCase();
+    
+    if (rut.length > 0) {
+      if (rut.length > 1) {
+        const cuerpo = rut.slice(0, -1);
+        const dv = rut.slice(-1);
+        const rutFormateado = cuerpo.replace(/\B(?=(\d{3})+(?!\d))/g, '.') + '-' + dv;
+        input.value = rutFormateado;
+      }
+    }
+  }
+
+  function toggleAdminLogin() {
+    const div = document.getElementById('adminLoginDiv');
+    const icon = document.getElementById('iconAdminToggle');
+    div.classList.toggle('hidden');
+    icon.classList.toggle('fa-chevron-down');
+    icon.classList.toggle('fa-chevron-up');
+  }
+
+  function mostrarRegistro() {
+    // Ocultar formulario de login
+    document.getElementById('formLoginUsuario').classList.add('hidden');
+    // Ocultar enlace "¿No tienes cuenta?"
+    document.getElementById('linkRegistro').classList.add('hidden');
+    // Mostrar formulario de registro
+    document.getElementById('formRegistroDiv').classList.remove('hidden');
+    // Scroll suave al formulario de registro
+    document.getElementById('formRegistroDiv').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  function mostrarLogin() {
+    // Ocultar formulario de registro
+    document.getElementById('formRegistroDiv').classList.add('hidden');
+    // Mostrar formulario de login
+    document.getElementById('formLoginUsuario').classList.remove('hidden');
+    // Mostrar enlace "¿No tienes cuenta?"
+    document.getElementById('linkRegistro').classList.remove('hidden');
+    // Scroll suave al formulario de login
+    document.getElementById('formLoginUsuario').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  function iniciarSesionUsuario(event) {
+    event.preventDefault();
+    const rut = document.getElementById('rutLoginUsuario').value.trim();
+    const errorDiv = document.getElementById('mensajeErrorUsuario');
+    const textoError = document.getElementById('textoErrorUsuario');
+    const errorRUT = document.getElementById('errorRUTUsuario');
+    
+    errorDiv.classList.add('hidden');
+    errorRUT.classList.add('hidden');
+    
+    if (!rut) {
+      errorRUT.textContent = 'El RUT es obligatorio';
+      errorRUT.classList.remove('hidden');
+      return;
+    }
+    
+    fetch('/iniciar_sesion/', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': getCookie('csrftoken')
+      },
+      body: JSON.stringify({ rut: rut })
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.error) {
+        textoError.textContent = data.error;
+        errorDiv.classList.remove('hidden');
+        return;
+      }
+      
+      // Éxito - redirigir
+      window.location.href = '/';
+    })
+    .catch(error => {
+      console.error('Error:', error);
+      textoError.textContent = 'Error al iniciar sesión. Intenta nuevamente.';
+      errorDiv.classList.remove('hidden');
+    });
+  }
+
+  function registrarUsuarioDesdeLogin(event) {
+    event.preventDefault();
+    const nombre = document.getElementById('nombreCompletoRegistro').value.trim();
+    const rut = document.getElementById('rutRegistro').value.trim();
+    const errorNombre = document.getElementById('errorNombreRegistro');
+    const errorRUT = document.getElementById('errorRUTRegistro');
+    
+    errorNombre.classList.add('hidden');
+    errorRUT.classList.add('hidden');
+    
+    if (!nombre) {
+      errorNombre.textContent = 'El nombre completo es obligatorio';
+      errorNombre.classList.remove('hidden');
+      return;
+    }
+    
+    if (!rut) {
+      errorRUT.textContent = 'El RUT es obligatorio';
+      errorRUT.classList.remove('hidden');
+      return;
+    }
+    
+    fetch('/registrar_usuario/', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': getCookie('csrftoken')
+      },
+      body: JSON.stringify({
+        nombre_completo: nombre,
+        rut: rut
+      })
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.error) {
+        if (data.error.includes('nombre')) {
+          errorNombre.textContent = data.error;
+          errorNombre.classList.remove('hidden');
+        } else {
+          errorRUT.textContent = data.error;
+          errorRUT.classList.remove('hidden');
+        }
+        return;
+      }
+      
+      // Éxito - redirigir
+      window.location.href = '/';
+    })
+    .catch(error => {
+      console.error('Error:', error);
+      errorRUT.textContent = 'Error al registrar. Intenta nuevamente.';
+      errorRUT.classList.remove('hidden');
+    });
+  }
+
+  function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+      const cookies = document.cookie.split(';');
+      for (let i = 0; i < cookies.length; i++) {
+        const cookie = cookies[i].trim();
+        if (cookie.substring(0, name.length + 1) === (name + '=')) {
+          cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+          break;
+        }
+      }
+    }
+    return cookieValue;
+  }
+</script>
+{% endblock %}
+
+{% block footer %}
+  &copy; 2024 Mister K. Todos los derechos reservados.
+{% endblock %}
