@@ -1,22 +1,16 @@
 #!/usr/bin/env bash
 # Start script para Render
 
-set -o errexit  # Exit on error
+set +o errexit  # No salir en error para manejar migraciones problemáticas
 
 # Aplicar migraciones de misterK primero
 python manage.py migrate misterK
 
-# Marcar como fake las migraciones problemáticas de auth si es necesario
-python manage.py migrate auth 0002 --fake || true
-python manage.py migrate auth 0003 --fake || true
+# Marcar como fake la migración problemática de auth antes de aplicar
+python manage.py migrate auth 0003_alter_user_email_max_length --fake 2>/dev/null || true
 
 # Aplicar todas las demás migraciones
-python manage.py migrate || true
-
-# Aplicar migraciones de contenttypes, sessions, admin
-python manage.py migrate contenttypes || true
-python manage.py migrate sessions || true
-python manage.py migrate admin || true
+python manage.py migrate --run-syncdb 2>/dev/null || python manage.py migrate
 
 # Iniciar servidor
 gunicorn mainApp.wsgi:application
