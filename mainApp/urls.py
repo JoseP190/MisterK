@@ -26,4 +26,4 @@ urlpatterns = [
     path('estado_pedido/', views.estado_pedido, name='estado_pedido'),
     path('cerrar_sesion/', views.cerrar_sesion, name='cerrar_sesion'),
     
-] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT) + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
