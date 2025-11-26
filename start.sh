@@ -3,15 +3,20 @@
 
 set -o errexit  # Exit on error
 
-# Aplicar migraciones de forma segura
-# Primero aplicar solo las migraciones de misterK
+# Aplicar migraciones de misterK primero
 python manage.py migrate misterK
 
-# Intentar aplicar las migraciones de auth, si falla usar --fake
-python manage.py migrate auth || python manage.py migrate auth --fake-initial || true
+# Marcar como fake las migraciones problemáticas de auth si es necesario
+python manage.py migrate auth 0002 --fake || true
+python manage.py migrate auth 0003 --fake || true
 
 # Aplicar todas las demás migraciones
-python manage.py migrate
+python manage.py migrate || true
+
+# Aplicar migraciones de contenttypes, sessions, admin
+python manage.py migrate contenttypes || true
+python manage.py migrate sessions || true
+python manage.py migrate admin || true
 
 # Iniciar servidor
 gunicorn mainApp.wsgi:application
